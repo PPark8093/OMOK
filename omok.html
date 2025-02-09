@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OMOK</title>
+
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            background-color: rgb(120, 120, 120);
+            display: flex;
+            justify-content: center;
+            height: 100vh;
+            align-items: center;
+        }
+
+        body {
+            width: 60%;
+            display: flex;
+            flex-direction: column;
+            margin: 2rem;
+            gap: 1rem;
+        }
+
+        button:hover {
+            filter: brightness(95%);
+            cursor: pointer;
+        }
+
+        input {
+            padding: 0.5rem;
+            font-size: large;
+            outline: none;
+            align-self: stretch;
+        }
+
+        #header {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+        }
+
+        #mid_container {
+            display: flex;
+            flex-direction: row;
+            gap: 1rem;
+        }
+
+        #canvas {
+            background-color: white;
+            image-rendering: pixelated;
+            flex: 1;
+        }
+
+        #panel {
+            background-color: white;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .panel_button {
+            padding: 1rem 2rem;
+            outline: none;
+            border: none;
+            border-bottom: 1px solid black;
+            border-top: 1px solid black;
+            border-radius: 0;
+            align-self: stretch;
+        }
+
+        #input_container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #error_message {
+            color: rgb(150, 0, 0);
+            margin-bottom: 0.5rem;
+        }
+
+        #main_button {
+            padding: 0.8rem 1rem;
+            outline: none;
+            font-size: large;
+            align-self: stretch;
+        }
+
+        #footer {
+            display: flex;
+            justify-content: center;
+        }
+
+        @media screen and (max-width: 768px) {
+            #panel {
+                display: none;
+            }
+        }
+        
+        @media screen and (max-width: 500px) {
+            #canvas {
+                width: 100px;
+            }
+        }
+    </style>
+
+    <script>
+
+        var main_button;
+
+        var canvas;
+        var ctx;
+
+        var turn;
+
+        var omok_map = [];
+        for (var i = 0; i < 19; i++) {
+            omok_map[i] = [];
+            for (var j = 0; j < 19; j++) {
+                omok_map[i][j] = -1;
+            }
+        } // 사실 push 쓰는게 더 편함
+
+        var error_message;
+
+        window.onload = () => {
+            canvas = document.querySelector("#canvas");
+            canvas.height = canvas.width;
+            ctx = canvas.getContext("2d");
+            main_button = document.querySelector("#main_button");
+            error_message = document.querySelector("#error_message");
+            error_message.style.display = "none";
+            
+            turn = true;
+
+            draw_base();
+        }
+
+        function draw_base() {
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = "black";
+
+            var gridSize = canvas.width / 19;
+
+            for (var i = 0; i < 19; i++) {
+                let y = Math.round(i * gridSize);
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.height, y);
+                ctx.stroke();
+                ctx.closePath();
+            }
+
+            for (var i = 0; i < 19; i++) {
+                let x = Math.round(i * gridSize);
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.width);
+                ctx.stroke();
+                ctx.closePath();
+            } // 이거 안하면 다른 동작으로 이어짐
+        }
+
+        function on_press_main() {
+            var x = document.querySelector("#input_x").value;
+            var y = document.querySelector("#input_y").value;
+            if (x > 0 && x < 19 && y > 0 && y < 19) {
+                if (omok_map[x][y] == -1) {
+                    if (turn) {
+                        omok_map[x][y] = 0;
+                    } else  {
+                        omok_map[x][y] = 1;
+                    }
+                    draw_omok_map();
+                    main_button.innerHTML = "NEXT";
+                    turn = !turn;
+                    error_message.innerHTML = "ERROR";
+                    error_message.style.display = "none";
+                } else {
+                    error_message.innerHTML = "이미 있는 칸 안됨";
+                    error_message.style.display = "flex";
+                }
+            } else {
+                error_message.innerHTML = "좌표 제대로 입력 ㄱㄱ (1~18)";
+                error_message.style.display = "flex";
+            }
+
+            check_win();
+        }
+
+        function draw_omok_map() {
+            for (var i = 0; i < 19; i++) {
+                for (var j = 0; j < 19; j++) {
+                    if (omok_map[i][j] == 0) {
+                        ctx.fillStyle = "black";
+                        ctx.beginPath();
+
+                        let gridSize = canvas.width / 19;  // 그리드 크기 계산
+                        let x = i * gridSize; // + gridSize / 2;  // 격자의 중앙 좌표
+                        let y = j * gridSize; // + gridSize / 2;
+                        let radius = gridSize / 2.5;  // 오목알 크기 조절
+
+                        ctx.arc(x, y, radius, 0, Math.PI * 2);
+                        ctx.fillStyle = "black";  // 돌 색상 설정
+                        ctx.fill();
+                        ctx.closePath();
+                    } else if (omok_map[i][j] == 1) {
+                        ctx.fillStyle = "white";
+                        ctx.beginPath();
+
+                        let gridSize = canvas.width / 19;  // 그리드 크기 계산
+                        let x = i * gridSize; // + gridSize / 2;  // 격자의 중앙 좌표
+                        let y = j * gridSize; // + gridSize / 2;
+                        let radius = gridSize / 2.5;  // 오목알 크기 조절
+
+                        ctx.arc(x, y, radius, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.closePath();
+                    }
+                } 
+            }
+        }
+
+        function check_win() {
+            console.log(omok_map);
+            for (var i = 0; i < 19; i++) {
+                for (var j = 0; j < 19; j++) {
+                    if (omok_map[i][j] != -1) {
+                        let player = omok_map[i][j];
+                        // 확인할 네 방향: 가로, 세로, 우하 대각선, 우상 대각선
+                        let directions = [
+                            [1, 0],
+                            [0, 1],
+                            [1, 1],
+                            [1, -1]
+                        ];
+                        for (let d = 0; d < directions.length; d++) {
+                            let dx = directions[d][0];
+                            let dy = directions[d][1];
+                            let count = 1;  // 현재 돌 포함
+
+                            // 앞으로 같은 돌이 몇 개 있는지 확인
+                            let x = i + dx;
+                            let y = j + dy;
+                            while (x >= 0 && x < 19 && y >= 0 && y < 19 && omok_map[x][y] === player) {
+                                count++;
+                                x += dx;
+                                y += dy;
+                            }
+
+                            // 반대 방향도 확인
+                            x = i - dx;
+                            y = j - dy;
+                            while (x >= 0 && x < 19 && y >= 0 && y < 19 && omok_map[x][y] === player) {
+                                count++;
+                                x -= dx;
+                                y -= dy;
+                            }
+
+                            // 연속된 돌이 5개 이상이면 승리
+                            if (count >= 5) {
+                                alert((player === 0 ? "검정돌" : "흰돌") + " 승리");
+                                main_button.disabled = true;
+                                main_button.innerHTML = (player === 0 ? "검정돌" : "흰돌") + " 승리"
+                                return;
+                            }
+                        }
+                    }
+                } 
+            }
+        }
+
+    </script>
+</head>
+<body>
+    <header id="header">
+        <h1>OMOK</h1>
+        <img width="100%" height="43vh" src="OMOK_IMAGE.png">
+    </header>
+
+    <div id="mid_container">
+        <canvas id="canvas"></canvas>
+        <div id="panel">
+            <h3>RANK</h3>
+            <button class="panel_button">settings</button>
+        </div>
+    </div>
+
+    <div id="input_container">
+        <h3 id="error_message">ERROR</h3>
+        <input type="number" id="input_x" placeholder="X 좌표 (1~18)">
+        <input type="number" id="input_y" placeholder="Y 좌표 (1~18)">
+        <button id="main_button" onclick="on_press_main()">START</button>
+    </div>
+
+    <footer id="footer">
+        <h4>Made by <a href="https://github.com/PPark8093" target="_blank">PPark8093</a></h4>
+    </footer>
+</body>
+</html>
