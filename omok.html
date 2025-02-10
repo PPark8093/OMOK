@@ -97,7 +97,9 @@
 
         #footer {
             display: flex;
-            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 5px;
         }
 
         @media screen and (max-width: 768px) {
@@ -230,12 +232,13 @@
             }
         }
 
-        function check_win() {
+        function check_win() {  
             console.log(omok_map);
             for (var i = 0; i < 19; i++) {
                 for (var j = 0; j < 19; j++) {
                     if (omok_map[i][j] != -1) {
                         let player = omok_map[i][j];
+
                         // 확인할 네 방향: 가로, 세로, 우하 대각선, 우상 대각선
                         let directions = [
                             [1, 0],
@@ -243,6 +246,7 @@
                             [1, 1],
                             [1, -1]
                         ];
+                        
                         for (let d = 0; d < directions.length; d++) {
                             let dx = directions[d][0];
                             let dy = directions[d][1];
@@ -284,7 +288,7 @@
 <body>
     <header id="header">
         <h1>OMOK</h1>
-        <img width="100%" height="43vh" src="../OMOK_IMAGE.png">
+        <img width="100%" height="43vh" src="OMOK_IMAGE.png">
     </header>
 
     <div id="mid_container">
@@ -304,6 +308,7 @@
 
     <footer id="footer">
         <h4>Made by <a href="https://github.com/PPark8093" target="_blank">PPark8093</a></h4>
+        <h6>(멀티 기능은 아직)</h6>
     </footer>
 </body>
 </html>
